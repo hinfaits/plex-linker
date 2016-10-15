@@ -1,0 +1,4 @@
+[settings]
+source_directory = /directory/containing/your/tv
+target_directory = /directory/you/want/your/shows/to/go
+
