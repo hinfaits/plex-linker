@@ -66,22 +66,23 @@ class Show():
 
 def main():
     config = Config()
-    while True:
-        for root, dirs, files in os.walk(config.source_dir):
-            for f in files:
-                show = Show(f, root)
-                show.create_link()
-        for root, dirs, files in os.walk(config.target_dir):
-            for f in files:
-                try:
-                    os.stat("{}/{}".format(root, f))
-                except OSError as exception:
-                    if exception.errno != errno.ENOENT:
-                        raise
-                    else:
-                        os.remove("{}/{}".format(root, f))
-        sleep(60)
+
+    # Try to create symlinks
+    for root, dirs, files in os.walk(config.source_dir):
+        for f in files:
+            show = Show(f, root)
+            show.create_link()
+
+    # Remove dead links
+    for root, dirs, files in os.walk(config.target_dir):
+        for f in files:
+            try:
+                os.stat("{}/{}".format(root, f))
+            except OSError as exception:
+                if exception.errno != errno.ENOENT:
+                    raise
+                else:
+                    os.remove("{}/{}".format(root, f))
 
 if __name__=="__main__":
     main()
-
