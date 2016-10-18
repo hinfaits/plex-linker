@@ -9,7 +9,7 @@ from time import sleep
 def remove_prefix(text, prefix):
     if text.startswith(prefix):
         return text[len(prefix):]
-    return text  # or whatever
+    return text
 
 def create_path(path):
     try:
@@ -25,6 +25,9 @@ def remove_path(path):
         if exception.errno != errno.ENOTEMPTY:
             raise
 
+def add_whitespace(str):
+    return str.replace(".", " ").replace("-", " ")
+
 class Config():
     def __init__(self):
         self.config = ConfigParser.SafeConfigParser()
@@ -39,7 +42,7 @@ class Show():
         self.generate_metadata()
 
     def generate_metadata(self):
-        res = re.search("^(.+)\.S(\d+)E([E\d-]+)\..+$", self.file)
+        res = re.search("^(.+)\.S(\d+)E([^.]+)\..+$", self.file)
         if res is not None:
             self.name = res.group(1)
             self.season = res.group(2)
@@ -51,7 +54,10 @@ class Show():
         the symlink for the show should go
         """
         config = Config()
-        return "{}/{}/Season.{}".format(config.target_dir, self.name, self.season)
+        newshowname = add_whitespace(self.name)
+        newseason = add_whitespace(self.season)
+        filepath = os.path.join(config.target_dir, newshowname, "Season {}".format(newseason))
+        return filepath
 
     def create_link(self):
         if not hasattr(self, 'name'):
@@ -59,7 +65,13 @@ class Show():
             return
         create_path(self.destination())
         try:
-            os.symlink("{}/{}".format(self.path, self.file), "{}/{}".format(self.destination(), self.file))
+            newfilename = "{} - s{}e{} - {}".format(
+                add_whitespace(self.name),
+                add_whitespace(self.season),
+                add_whitespace(self.episode.lower()),
+                self.file,
+            )
+            os.symlink(os.path.join(self.path, self.file), os.path.join(self.destination(), newfilename))
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise
@@ -76,13 +88,14 @@ def main():
     # Remove dead links
     for root, dirs, files in os.walk(config.target_dir):
         for f in files:
+            filepathname = os.path.join(root, f)
             try:
-                os.stat("{}/{}".format(root, f))
+                os.stat(filepathname)
             except OSError as exception:
                 if exception.errno != errno.ENOENT:
                     raise
                 else:
-                    os.remove("{}/{}".format(root, f))
+                    os.remove(filepathname)
 
 if __name__=="__main__":
     main()
