@@ -31,7 +31,7 @@ def add_whitespace(str):
 class Config():
     def __init__(self):
         self.config = ConfigParser.SafeConfigParser()
-        self.config.read("./config.ini")
+        self.config.read(os.path.join(os.path.dirname(__file__), "config.ini"))
         self.source_dir = self.config.get("settings", "source_directory")
         self.target_dir = self.config.get("settings", "target_directory")
 
@@ -99,3 +99,4 @@ def main():
 
 if __name__=="__main__":
     main()
+
